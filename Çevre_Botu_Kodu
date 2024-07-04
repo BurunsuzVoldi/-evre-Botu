@@ -1,0 +1,67 @@
+pip install discord.py
+2.⁠ ⁠Bot Kodu
+python
+Kodu kopyala
+import discord
+from discord.ext import commands
+import random
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = commands.Bot(command_prefix='$', intents=intents)
+
+@bot.event
+async def on_ready():
+    print(f'{bot.user} olarak giriş yaptık')
+
+# Çevre Oyunu
+questions = [
+    {"question": "Hangi enerji kaynağı yenilenebilir değildir?", "options": ["Güneş", "Rüzgar", "Kömür"], "answer": "Kömür"},
+    {"question": "Hangi madde geri dönüştürülemez?", "options": ["Cam şişe", "Plastik şişe", "Strafor"], "answer": "Strafor"},
+    {"question": "Hangisi karbon ayak izini azaltmak için yapılabilir?", "options": ["Araba kullanmak", "Bisiklet sürmek", "Fazla tüketim"], "answer": "Bisiklet sürmek"}
+]
+
+@bot.command(name='oyun')
+async def quiz(ctx):
+    question = random.choice(questions)
+    options = "\n".join([f"{i+1}. {opt}" for i, opt in enumerate(question["options"])])
+    await ctx.send(f"{question['question']}\n{options}")
+
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit()
+
+    try:
+        msg = await bot.wait_for("message", check=check, timeout=15.0)
+        if question["options"][int(msg.content) - 1].lower() == question["answer"].lower():
+            await ctx.send("Doğru cevap!")
+        else:
+            await ctx.send(f"Yanlış cevap! Doğru cevap: {question['answer']}")
+    except:
+        await ctx.send("Cevaplama süresi doldu.")
+
+# Karbon Ayak İzi Testi
+@bot.command(name='karbon')
+async def carbon_footprint(ctx):
+    questions = [
+        ("Günde kaç kilometre araba kullanıyorsunuz?", 0.2),
+        ("Günde kaç kilovat saat elektrik harcıyorsunuz?", 0.5),
+        ("Haftada kaç kez et yiyorsunuz?", 1.5)
+    ]
+
+    total_score = 0
+
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit()
+
+    try:
+        for q, factor in questions:
+            await ctx.send(q)
+            msg = await bot.wait_for("message", check=check, timeout=30.0)
+            total_score += int(msg.content) * factor
+
+        await ctx.send(f"Karbondioksit ayak iziniz: {total_score:.2f} kg CO2")
+    except:
+        await ctx.send("Cevaplama süresi doldu.")
+
+bot.run('YOUR_DISCORD_BOT_TOKEN')
